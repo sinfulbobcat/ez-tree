@@ -17,9 +17,19 @@
   "build": {
     "appId": "dev.eztree.app",
     "productName": "EZTree",
+
     "linux": {
-      "target": ["dir"],
+      "target": ["dir", "AppImage"],
       "category": "Graphics"
+    },
+
+    "win": {
+      "target": ["nsis"]
+    },
+
+    "mac": {
+      "target": ["dmg", "zip"]
     }
   }
+
 }
