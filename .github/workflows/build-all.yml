@@ -7,14 +7,15 @@ on:
 
 jobs:
   build:
+    name: Build (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
 
-    runs-on: ${{ matrix.os }}
-
     env:
-      ELECTRON_BUILDER_SKIP_PUBLISH: 1
+      ELECTRON_BUILDER_SKIP_PUBLISH: true
 
     steps:
       - name: Checkout
@@ -42,7 +43,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: linux
-          path: dist/
+          path: dist/ez-tree-linux-x64.zip
 
       # ---------- Windows ----------
       - name: Build Windows
@@ -79,29 +80,40 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: linux
-          path: artifacts/linux
+          path: release
 
       - name: Download Windows artifact
         uses: actions/download-artifact@v4
         with:
           name: windows
-          path: artifacts/windows
+          path: windows
 
       - name: Download macOS artifact
         uses: actions/download-artifact@v4
         with:
           name: macos
-          path: artifacts/macos
+          path: macos
 
-      - name: Prepare release files
+      - name: Prepare Windows zip
         run: |
-          set -e
-          mkdir -p release
+          if ls windows/*.exe 1>/dev/null 2>&1; then
+            zip -j release/ez-tree-windows-x64.zip windows/*.exe
+          fi
 
-          # Linux
-          cp artifacts/linux/dist/ez-tree-linux-x64.zip release/
+      - name: Prepare macOS zip
+        run: |
+          if ls macos/*.dmg 1>/dev/null 2>&1; then
+            zip -j release/ez-tree-macos.zip macos/*.dmg
+          elif ls macos/*.app 1>/dev/null 2>&1; then
+            zip -r release/ez-tree-macos.zip macos/*.app
+          fi
 
-          # Windows
-          if ls artifacts/windows/dist/*.exe 1>/dev/null 2>&1; then
-            zip -j release/ez-tree-windows-x64.zip artifacts/windows/dist/*.exe
-          elif [ -d artifact]()
+      - name: List release files
+        run: ls -lh release
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: release/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
