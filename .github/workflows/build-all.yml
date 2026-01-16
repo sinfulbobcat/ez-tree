@@ -11,11 +11,13 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
 
+    # 🔴 THIS IS THE MOST IMPORTANT PART
     env:
-      ELECTRON_BUILDER_SKIP_PUBLISH: true
+      GH_TOKEN: ${{ secrets.GH_TOKEN }}
 
     steps:
       - name: Checkout
@@ -27,95 +29,105 @@ jobs:
           node-version: 20
           cache: npm
 
+      # 🧪 HARD DEBUG — FAILS IMMEDIATELY IF TOKEN IS NOT PRESENT
+      - name: Debug GH_TOKEN (must exist)
+        shell: bash
+        run: |
+          if [ -z "$GH_TOKEN" ]; then
+            echo "❌ GH_TOKEN IS EMPTY"
+            exit 1
+          else
+            echo "✅ GH_TOKEN IS PRESENT"
+          fi
+
       - name: Install dependencies
         run: npm ci
 
-      # ---------- Linux ----------
       - name: Build Linux
         if: runner.os == 'Linux'
-        run: |
-          npm run build:linux
-          cd dist
-          zip -r ez-tree-linux-x64.zip linux-unpacked
+        run: npm run build:linux
 
-      - name: Upload Linux artifact
-        if: runner.os == 'Linux'
-        uses: actions/upload-artifact@v4
-        with:
-          name: linux
-          path: dist/ez-tree-linux-x64.zip
-
-      # ---------- Windows ----------
       - name: Build Windows
         if: runner.os == 'Windows'
         run: npm run build:win
 
-      - name: Upload Windows artifact
-        if: runner.os == 'Windows'
-        uses: actions/upload-artifact@v4
-        with:
-          name: windows
-          path: dist/
-
-      # ---------- macOS ----------
       - name: Build macOS
         if: runner.os == 'macOS'
         run: npm run build:mac
 
-      - name: Upload macOS artifact
-        if: runner.os == 'macOS'
+      # 📦 Zip Linux unpacked (AUR-friendly)
+      - name: Zip linux-unpacked
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          cd dist
+          if [ -d linux-unpacked ]; then
+            zip -r ez-tree-linux-x64.zip linux-unpacked
+          fi
+
+      # ⬆️ Upload build artifacts
+      - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: macos
+          name: ${{ runner.os }}-build
           path: dist/
 
   release:
     name: Create GitHub Release
     runs-on: ubuntu-latest
     needs: build
-    if: startsWith(github.ref, 'refs/tags/v')
+
+    # 🔴 REQUIRED so GITHUB_TOKEN can create releases
+    permissions:
+      contents: write
 
     steps:
-      - name: Download Linux artifact
+      - name: Download Linux build
         uses: actions/download-artifact@v4
         with:
-          name: linux
-          path: release
+          name: Linux-build
+          path: artifacts/linux
 
-      - name: Download Windows artifact
+      - name: Download Windows build
         uses: actions/download-artifact@v4
         with:
-          name: windows
-          path: windows
+          name: Windows-build
+          path: artifacts/windows
 
-      - name: Download macOS artifact
+      - name: Download macOS build
         uses: actions/download-artifact@v4
         with:
-          name: macos
-          path: macos
+          name: macOS-build
+          path: artifacts/macos
 
-      - name: Prepare Windows zip
+      - name: Prepare release files
+        shell: bash
         run: |
-          if ls windows/*.exe 1>/dev/null 2>&1; then
-            zip -j release/ez-tree-windows-x64.zip windows/*.exe
+          mkdir -p release
+
+          # Linux
+          if [ -f artifacts/linux/dist/ez-tree-linux-x64.zip ]; then
+            cp artifacts/linux/dist/ez-tree-linux-x64.zip release/
           fi
 
-      - name: Prepare macOS zip
-        run: |
-          if ls macos/*.dmg 1>/dev/null 2>&1; then
-            zip -j release/ez-tree-macos.zip macos/*.dmg
-          elif ls macos/*.app 1>/dev/null 2>&1; then
-            zip -r release/ez-tree-macos.zip macos/*.app
+          # Windows
+          if ls artifacts/windows/dist/*.exe 1> /dev/null 2>&1; then
+            (cd artifacts/windows/dist && zip -j ../../release/ez-tree-windows-x64.zip *.exe)
           fi
 
-      - name: List release files
-        run: ls -lh release
+          # macOS
+          if ls artifacts/macos/dist/*.dmg 1> /dev/null 2>&1; then
+            (cd artifacts/macos/dist && zip -j ../../release/ez-tree-macos.zip *.dmg)
+          elif ls artifacts/macos/dist/*.zip 1> /dev/null 2>&1; then
+            cp artifacts/macos/dist/*.zip release/
+          fi
 
-      - name: Publish GitHub Release
+          echo "Release contents:"
+          ls -la release
+
+      - name: Create GitHub Release and upload assets
         uses: softprops/action-gh-release@v2
         with:
           files: release/*
         env:
-          ELECTRON_BUILDER_SKIP_PUBLISH: false
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}
-
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
