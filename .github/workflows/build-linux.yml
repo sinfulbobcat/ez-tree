@@ -1,4 +1,4 @@
-name: Build Linux (unpacked)
+name: Build All Platforms
 
 on:
   push:
@@ -6,11 +6,15 @@ on:
       - "v*"
 
 jobs:
-  build-linux:
-    runs-on: ubuntu-latest
+  build:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+
+    runs-on: ${{ matrix.os }}
 
     steps:
-      - name: Checkout repository
+      - name: Checkout
         uses: actions/checkout@v4
 
       - name: Setup Node.js
@@ -22,23 +26,39 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Build Electron (linux-unpacked)
-        run: npm run build:linux
+      - name: Build Electron
+        run: |
+          if [ "$RUNNER_OS" = "Linux" ]; then
+            npm run build:linux
+          elif [ "$RUNNER_OS" = "Windows" ]; then
+            npm run build:win
+          else
+            npm run build:mac
+          fi
+        shell: bash
 
+      # Linux ZIP (AUR target)
       - name: Zip linux-unpacked
+        if: runner.os == 'Linux'
         run: |
           cd dist
           zip -r ez-tree-linux-x64.zip linux-unpacked
 
-      - name: Upload artifact (for debugging)
+      # Upload all artifacts
+      - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: ez-tree-linux-unpacked
-          path: dist/ez-tree-linux-x64.zip
+          name: ${{ runner.os }}-build
+          path: dist/
 
+      # GitHub Release (only once, from Linux job)
       - name: Create GitHub Release
+        if: runner.os == 'Linux'
         uses: softprops/action-gh-release@v2
         with:
-          files: dist/ez-tree-linux-x64.zip
+          files: |
+            dist/ez-tree-linux-x64.zip
+            dist/*.exe
+            dist/*.dmg
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

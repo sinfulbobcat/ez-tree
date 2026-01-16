@@ -1,13 +1,14 @@
 {
   "name": "ez-tree",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "EZ Tree – Procedural Tree Generator",
   "main": "main.js",
   "author": "Sinful Bobcat",
   "license": "MIT",
   "scripts": {
-    "start": "electron .",
-    "build:linux": "electron-builder --linux dir"
+    "build:linux": "electron-builder --linux dir",
+    "build:win": "electron-builder --win",
+    "build:mac": "electron-builder --mac"
   },
   "devDependencies": {
     "electron": "^30.5.1",
