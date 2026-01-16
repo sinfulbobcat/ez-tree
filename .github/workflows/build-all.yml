@@ -15,7 +15,6 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
 
-    # 🔴 THIS IS THE MOST IMPORTANT PART
     env:
       GH_TOKEN: ${{ secrets.GH_TOKEN }}
 
@@ -29,7 +28,6 @@ jobs:
           node-version: 20
           cache: npm
 
-      # 🧪 HARD DEBUG — FAILS IMMEDIATELY IF TOKEN IS NOT PRESENT
       - name: Debug GH_TOKEN (must exist)
         shell: bash
         run: |
@@ -55,18 +53,7 @@ jobs:
         if: runner.os == 'macOS'
         run: npm run build:mac
 
-      # 📦 Zip Linux unpacked (AUR-friendly)
-      - name: Zip linux-unpacked
-        if: runner.os == 'Linux'
-        shell: bash
-        run: |
-          cd dist
-          if [ -d linux-unpacked ]; then
-            zip -r ez-tree-linux-x64.zip linux-unpacked
-          fi
-
-      # ⬆️ Upload build artifacts
-      - name: Upload artifacts
+      - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
           name: ${{ runner.os }}-build
@@ -77,7 +64,6 @@ jobs:
     runs-on: ubuntu-latest
     needs: build
 
-    # 🔴 REQUIRED so GITHUB_TOKEN can create releases
     permissions:
       contents: write
 
@@ -103,27 +89,49 @@ jobs:
       - name: Prepare release files
         shell: bash
         run: |
+          set -e
+
           mkdir -p release
 
-          # Linux
-          if [ -f artifacts/linux/dist/ez-tree-linux-x64.zip ]; then
-            cp artifacts/linux/dist/ez-tree-linux-x64.zip release/
+          echo "=== Linux dist ==="
+          ls -R artifacts/linux/dist
+
+          echo "=== Windows dist ==="
+          ls -R artifacts/windows/dist
+
+          echo "=== macOS dist ==="
+          ls -R artifacts/macos/dist
+
+          # -------- Linux --------
+          if [ -d artifacts/linux/dist/linux-unpacked ]; then
+            (cd artifacts/linux/dist && zip -r ../../release/ez-tree-linux-x64.zip linux-unpacked)
+          else
+            echo "❌ linux-unpacked not found"
           fi
 
-          # Windows
-          if ls artifacts/windows/dist/*.exe 1> /dev/null 2>&1; then
+          # -------- Windows --------
+          if ls artifacts/windows/dist/*.exe 1>/dev/null 2>&1; then
             (cd artifacts/windows/dist && zip -j ../../release/ez-tree-windows-x64.zip *.exe)
+          else
+            echo "❌ Windows exe not found"
           fi
 
-          # macOS
-          if ls artifacts/macos/dist/*.dmg 1> /dev/null 2>&1; then
+          # -------- macOS --------
+          if ls artifacts/macos/dist/*.dmg 1>/dev/null 2>&1; then
             (cd artifacts/macos/dist && zip -j ../../release/ez-tree-macos.zip *.dmg)
-          elif ls artifacts/macos/dist/*.zip 1> /dev/null 2>&1; then
+          elif ls artifacts/macos/dist/*.zip 1>/dev/null 2>&1; then
             cp artifacts/macos/dist/*.zip release/
+          else
+            echo "❌ macOS output not found"
           fi
 
-          echo "Release contents:"
+          echo "=== FINAL RELEASE FILES ==="
           ls -la release
+
+          if [ -z "$(ls -A release)" ]; then
+            echo "❌ Release directory is empty — failing"
+            exit 1
+          fi
 
       - name: Create GitHub Release and upload assets
         uses: softprops/action-gh-release@v2
