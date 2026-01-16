@@ -13,6 +13,10 @@ jobs:
 
     runs-on: ${{ matrix.os }}
 
+    # Prevent electron-builder from auto-publishing; we will create the release in a separate job
+    env:
+      ELECTRON_BUILDER_SKIP_PUBLISH: 1
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -37,12 +41,14 @@ jobs:
           fi
         shell: bash
 
-      # Linux ZIP (AUR target)
+      # Linux ZIP (AUR target) - optional, will be packaged again in release job if missing
       - name: Zip linux-unpacked
         if: runner.os == 'Linux'
         run: |
           cd dist
-          zip -r ez-tree-linux-x64.zip linux-unpacked
+          if [ -d linux-unpacked ]; then
+            zip -r ez-tree-linux-x64.zip linux-unpacked
+          fi
 
       # Upload all artifacts
       - name: Upload artifacts
@@ -51,14 +57,71 @@ jobs:
           name: ${{ runner.os }}-build
           path: dist/
 
-      # GitHub Release (only once, from Linux job)
-      - name: Create GitHub Release
-        if: runner.os == 'Linux'
+  release:
+    name: Create Release and upload platform zips
+    runs-on: ubuntu-latest
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    steps:
+      - name: Download Linux build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: Linux-build
+          path: artifacts/linux
+
+      - name: Download Windows build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: Windows-build
+          path: artifacts/windows
+
+      - name: Download macOS build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: macOS-build
+          path: artifacts/macos
+
+      - name: Prepare release zips
+        run: |
+          set -e
+
+          mkdir -p release
+
+          # Linux: prefer pre-zipped file if present, otherwise zip linux-unpacked
+          if [ -f artifacts/linux/dist/ez-tree-linux-x64.zip ]; then
+            cp artifacts/linux/dist/ez-tree-linux-x64.zip release/
+          elif [ -d artifacts/linux/dist/linux-unpacked ]; then
+            (cd artifacts/linux/dist && zip -r ../../release/ez-tree-linux-x64.zip linux-unpacked)
+          elif ls artifacts/linux/dist/*AppImage 1> /dev/null 2>&1; then
+            (cd artifacts/linux/dist && zip -j ../../release/ez-tree-linux-x64.zip *AppImage)
+          else
+            echo "No Linux output found in artifacts/linux/dist"
+          fi
+
+          # Windows: bundle any .exe or win-unpacked into a single zip
+          if ls artifacts/windows/dist/*.exe 1> /dev/null 2>&1; then
+            (cd artifacts/windows/dist && zip -j ../../release/ez-tree-windows-x64.zip *.exe)
+          elif [ -d artifacts/windows/dist/win-unpacked ]; then
+            (cd artifacts/windows/dist && zip -r ../../release/ez-tree-windows-x64.zip win-unpacked)
+          else
+            echo "No Windows output found in artifacts/windows/dist"
+          fi
+
+          # macOS: bundle .dmg or .app into a zip
+          if ls artifacts/macos/dist/*.dmg 1> /dev/null 2>&1; then
+            (cd artifacts/macos/dist && zip -j ../../release/ez-tree-macos.zip *.dmg)
+          elif ls artifacts/macos/dist/*.app 1> /dev/null 2>&1; then
+            (cd artifacts/macos/dist && zip -r ../../release/ez-tree-macos.zip *.app)
+          else
+            echo "No macOS output found in artifacts/macos/dist"
+          fi
+
+      - name: List release files
+        run: ls -la release
+
+      - name: Create GitHub Release and upload zips
         uses: softprops/action-gh-release@v2
         with:
-          files: |
-            dist/ez-tree-linux-x64.zip
-            dist/*.exe
-            dist/*.dmg
+          files: release/*.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
