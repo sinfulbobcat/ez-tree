@@ -1,0 +1,107 @@
+name: Build All Platforms
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+
+    runs-on: ${{ matrix.os }}
+
+    env:
+      ELECTRON_BUILDER_SKIP_PUBLISH: 1
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      # ---------- Linux ----------
+      - name: Build Linux
+        if: runner.os == 'Linux'
+        run: |
+          npm run build:linux
+          cd dist
+          zip -r ez-tree-linux-x64.zip linux-unpacked
+
+      - name: Upload Linux artifact
+        if: runner.os == 'Linux'
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux
+          path: dist/
+
+      # ---------- Windows ----------
+      - name: Build Windows
+        if: runner.os == 'Windows'
+        run: npm run build:win
+
+      - name: Upload Windows artifact
+        if: runner.os == 'Windows'
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows
+          path: dist/
+
+      # ---------- macOS ----------
+      - name: Build macOS
+        if: runner.os == 'macOS'
+        run: npm run build:mac
+
+      - name: Upload macOS artifact
+        if: runner.os == 'macOS'
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos
+          path: dist/
+
+  release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+
+    steps:
+      - name: Download Linux artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: linux
+          path: artifacts/linux
+
+      - name: Download Windows artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: windows
+          path: artifacts/windows
+
+      - name: Download macOS artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: macos
+          path: artifacts/macos
+
+      - name: Prepare release files
+        run: |
+          set -e
+          mkdir -p release
+
+          # Linux
+          cp artifacts/linux/dist/ez-tree-linux-x64.zip release/
+
+          # Windows
+          if ls artifacts/windows/dist/*.exe 1>/dev/null 2>&1; then
+            zip -j release/ez-tree-windows-x64.zip artifacts/windows/dist/*.exe
+          elif [ -d artifact]()
