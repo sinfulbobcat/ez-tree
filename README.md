@@ -3,7 +3,7 @@
 
 # ez-tree
 
-Electron desktop wrapper of the EZ-Tree web tool — a simple native app for generating and copying tree-style directory listings.
+Electron desktop wrapper of the [EZ-Tree web tool](https://eztree.dev) — a simple native app for generating and copying tree-style directory listings.
 
 [![Latest release](https://img.shields.io/github/v/release/sinfulbobcat/ez-tree)](https://github.com/sinfulbobcat/ez-tree/releases/latest) [![Actions](https://img.shields.io/badge/actions-build-blue)](https://github.com/sinfulbobcat/ez-tree/actions) [![License](https://img.shields.io/badge/license-SEE--LICENSE-lightgrey)](#license)
 </div>
@@ -27,33 +27,25 @@ Screenshot
 
 
 Quick usage
-1. Install the release for your platform (see Releases).
-2. Open the app.
-3. Drag a folder into the window or use the folder picker.
-4. View the generated tree, then copy or save the output.
+1. Download the zip-file from [releases](https://github.com/sinfulbobcat/ez-tree/releases/latest).
+2. Run `ez-tree`.
+3. Use the app!
 
-Attribution & Legal (please review)
+Attribution & Legal
 - Original site / concept: EZ-Tree by Dan Greenheck.
 - Original site URL (please confirm): https://eztree.dev
 - Attribution text suggested for the About screen and README:
   - "This application is based on and includes work from EZ-Tree by Dan Greenheck (https://eztree.dev). All credit to the original author."
-- Please confirm that you have permission to reuse any code, assets, or design from the original site and that redistributing a packaged desktop app is compatible with the original work’s license. If the original site or assets are under a specific license, ensure your distribution complies with that license.
+
 
 Contributing
 - Found a bug or want a feature? Open an issue or submit a pull request.
 - Keep PRs focused and include a description of the change and motivation.
 
 License
-- This repository should include a LICENSE file. If you intend to release this project under MIT, add an MIT LICENSE file and clearly document any included third-party/original-site licensing requirements.
-- IMPORTANT: Before publishing releases widely, verify license compatibility with Dan Greenheck’s original work.
+- MIT
 
 Support
 - Issues and feature requests: https://github.com/sinfulbobcat/ez-tree/issues
 - Repo: https://github.com/sinfulbobcat/ez-tree
 - Author / maintainer: sinfulbobcat (GitHub)
-
-Notes
-- You asked not to include build instructions — releases and Actions are the distribution channels shown above.
-- If you confirm permission to reuse the original site assets (and confirm the exact original site URL if different), I can update the Attribution section with exact wording and include a short About text for the app.
-
-— GitHub Copilot Chat Assistant
