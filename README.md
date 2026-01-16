@@ -5,7 +5,7 @@
 
 Electron desktop wrapper of the [EZ-Tree web tool](https://eztree.dev) — a simple native app for generating and copying tree-style directory listings.
 
-[![Latest release](https://img.shields.io/github/v/release/sinfulbobcat/ez-tree)](https://github.com/sinfulbobcat/ez-tree/releases/latest) [![Actions](https://img.shields.io/badge/actions-build-blue)](https://github.com/sinfulbobcat/ez-tree/actions) [![License](https://img.shields.io/badge/license-SEE--LICENSE-lightgrey)](#license)
+[![Latest release](https://img.shields.io/github/v/release/sinfulbobcat/ez-tree)](https://github.com/sinfulbobcat/ez-tree/releases/latest) [![Actions](https://img.shields.io/badge/actions-build-blue)](https://github.com/sinfulbobcat/ez-tree/actions) [![License](https://img.shields.io/badge/license-MIT-green)](#license)
 </div>
 What this is
 - A desktop application that packages the EZ-Tree web UI into an Electron app for local/offline use.
