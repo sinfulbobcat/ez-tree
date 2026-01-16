@@ -31,6 +31,13 @@ Quick usage
 2. Run `ez-tree`.
 3. Use the app!
 
+>[!TIP]
+>Available in the [aur](https://aur.archlinux.org/packages/ez-tree).
+>Can be installed by any aur helper, eg, paru -S ez-tree
+
+>[!CAUTION]
+>When getting it from the aur DO NOT download  `ez-tree-bin` it is an older appimage based option that is broken. Thus I made the newer `ez-tree` aur package so it works flawlessly on every arch system.
+
 Attribution & Legal
 - Original site / concept: EZ-Tree by Dan Greenheck.
 - Original site URL (please confirm): https://eztree.dev
