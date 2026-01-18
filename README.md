@@ -3,7 +3,7 @@
 
 # ez-tree
 
-Electron desktop wrapper of the [EZ-Tree web tool](https://eztree.dev) (by Dan Greenheck) — a simple native app fir generating 3D tree assets for game development.
+Electron desktop wrapper of the [EZ-Tree web tool](https://eztree.dev) (by Dan Greenheck) — a simple native app for generating 3D tree assets for game development.
 
 [![Latest release](https://img.shields.io/github/v/release/sinfulbobcat/ez-tree)](https://github.com/sinfulbobcat/ez-tree/releases/latest) [![Actions](https://img.shields.io/badge/actions-build-blue)](https://github.com/sinfulbobcat/ez-tree/actions) [![License](https://img.shields.io/badge/license-MIT-green)](#license)
 </div>
@@ -22,8 +22,7 @@ Features
 - Cross-platform packaged binaries provided via Releases/Actions (no local build instructions here)
 
 Screenshot
-- Add a screenshot to ./assets/screenshot.png to show here.
-- <img width="1304" height="856" alt="image" src="https://github.com/user-attachments/assets/08c5fa64-54ac-4d89-b083-0dbe236fc110" />
+<img width="1304" height="856" alt="image" src="https://github.com/user-attachments/assets/08c5fa64-54ac-4d89-b083-0dbe236fc110" />
 
 
 Quick usage
